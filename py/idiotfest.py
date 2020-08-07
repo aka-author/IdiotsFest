@@ -37,10 +37,30 @@ class Idiot:
 
         return self._fad_name
         
+        
+    # Deriving values from fad_values    
 
     def key(self, fad_value):
     
         return str(fad_value)
+        
+             
+    def scale(self, fad_value):
+    
+        return 0    
+        
+        
+    # Accessing an idiot's journal    
+        
+    def assemble_journal_entry(self, fad_value):
+        
+        journal_entry = { \
+            "fad_value"       : fad_value, \
+            "fad_scale"       : self.scale(fad_value), \
+            "num_of_cases"    : 0, \
+            "target_estimate" : None}
+        
+        return journal_entry
         
         
     def key_exists(self, key):
@@ -50,18 +70,48 @@ class Idiot:
         
     def get_fad_value(self, key):
  
-        return self._journal[key].fad_value if self.key_exists(key) else None 
-        
-    
-    def scale(self, fad_value):
-    
-        return 0
+        return self._journal[key]["fad_value"] if self.key_exists(key) else None 
         
         
-    def get_scale(self, key):
+    def get_fad_scale(self, key):
 
-        return self._journal[key].scale if self.key_exists(key) else None 
+        return self._journal[key]["fad_scale"] if self.key_exists(key) else None 
         
+        
+    def get_num_of_cases(self, key):
+        
+        return self._journal[key]["num_of_cases"]
+        
+        
+    def set_num_of_cases(self, key, num_of_cases):
+
+        self._journal[key]["num_of_cases"] = num_of_cases
+        
+        
+    def inc_num_of_cases(self, key):
+
+       self.set_num_of_cases(key, self.get_num_of_cases(fad_value) + 1) 
+        
+        
+    def get_target_estimate(self, key):
+    
+        return self._journal[key]["target_estimate"]
+        
+        
+    def set_target_estimate(self, key, target_estimate):
+    
+        self._journal[key]["target_estimate"] = target_estimate 
+        
+        
+    def get_sorted_keys(self):
+    
+        sorted_keys = \
+            [key for key in sorted(self._journal, key=lambda k: self._journal[k]["fad_scale"])]
+
+        return sorted_keys
+      
+      
+    # Managing min and max scales 
     
     @property
     def fad_scale_min(self):
@@ -69,12 +119,12 @@ class Idiot:
         return self._fad_scale_min
         
         
-    @setter.fad_scale_min
+    @fad_scale_min.setter
     def fad_scale_min(self, fad_scale):
 
         if self._fad_scale_min is None:
             self._fad_scale_min = fad_scale
-        elif fad_scale_min > fad_scale:
+        elif self._fad_scale_min > fad_scale:
             self._fad_scale_min = fad_scale
          
             
@@ -84,36 +134,96 @@ class Idiot:
         return self._fad_scale_max
         
         
-    @setter.fad_scale_max
+    @fad_scale_max.setter
     def fad_scale_max(self, fad_scale):
     
         if self._fad_scale_max is None:
             self._fad_scale_max = fad_scale
-        elif fad_scale_max < fad_scale:
+        elif self._fad_scale_max < fad_scale:
             self._fad_scale_max = fad_scale    
 
 
-    def fad_scale_span(self):
+    def get_fad_scale_span(self):
+    
+        result = None
+        
+        if  self.fad_scale_min is not None and self.fad_scale_min is not None:
+            result = self.fad_scale_max - self.fad_scale_min
 
-        return self.fad_scale_max - self.fad_scale_min 
+        return result
           
                 
-    def update_fad_scale_range(self, fad_scale):
+    def update_fad_scale_span(self, fad_scale):
        
         self.fad_scale_min = fad_scale
-        self_fad_scale_max = fad_scale
+        self.fad_scale_max = fad_scale
 
+                        
+    # Managing a journal
+    
+    def register_fad_value(self, fad_value):
+    
+        journal_entry = self.assemble_journal_entry(fad_value)
+                                
+        key = self.key(fad_value)                        
+        self._journal[key] = journal_entry
+        
+        fad_scale = self.get_fad_scale(key)
+        self.update_fad_scale_span(fad_scale)
+        
+    
+    def fad_value_registered(self, fad_value):
+               
+        key = self.key(fad_value)       
+               
+        return self.key_exists(key)  
+    
+
+    def insert_target_estimate(self, fad_value, target_value):
+        
+        key = self.key(fad_value) 
+        
+        self.set_num_of_cases(key, 1)
+        self.set_target_estimate(key, target_value)
+            
+    
+    def update_target_estimate(self, fad_value, onemore_target_value):
+
+        key = self.key(fad_value) 
+        
+        curr_num_of_cases = self.get_num_of_cases(key)
+        curr_target_estimate = self.get_target_estimate(key)
+        
+        total_target_values_updated = \
+            curr_target_estimate*curr_num_of_cases + onemore_target_value 
+        
+        num_of_cases_updated = curr_num_of_cases + 1
+        target_estimate_updated = \
+            total_target_values_updated/num_of_cases_updated    
+                
+        self.set_num_of_cases(key, num_of_cases_updated)
+        self.set_target_estimate(key, target_estimate_updated)
+        
+        
+    def accept_case(self, fad_value, target_value):
+            
+        if self.fad_value_registered(fad_value):   
+            self.update_target_estimate(fad_value, target_value)                        
+        else:    
+            self.register_fad_value(fad_value)
+            self.insert_target_estimate(fad_value, target_value)
+                        
+                        
+    # Performing calculations over values and scales                    
                         
     def N(self, fad_scale):
     
         # N stands for normalize
    
-        self.update_fad_scale_range(fad_scale)
+        self.update_fad_scale_span(fad_scale)
         
         offset = fad_scale - self.fad_scale_min
-        
-        span = self.fad_scale_span()
-        
+        span = self.get_fad_scale_span()
         norm = offset/span if span != 0 else 0.5
                   
         return norm   
@@ -141,7 +251,7 @@ class Idiot:
         return result
         
         
-    def SIWND(self, fad_value_1, fad_value_2):
+    def IWND2(self, fad_value_1, fad_value_2):
 
         # SIWND is a squared inverse weighted normalized difference
 
@@ -150,95 +260,10 @@ class Idiot:
         return iwnd*iwnd if iwnd is not None else None 
         
              
-    def register_fad_value(self, fad_value):
-    
-        fad_scale = self.scale(fad_value)
-        self.update_fad_scale_range(fad_scale)
-    
-        entry = {"fad_value"       : fad_value, \
-                 "fad_scale"       : fad_scale, \
-                 "num_of_cases"    : 0, \
-                 "target_estimate" : None}
-                                
-        key = self.key(fad_value)                        
-        self._journal[key] = entry
-        
-    
-    def fad_value_registered(self, fad_value):
-               
-        key = self.key(fad_value)       
-               
-        return self.key_exists(key)  
-    
-    
-    def get_num_of_cases(self, fad_value):
-    
-        key = self.key(fad_value)
-        
-        return self._journal[key]["num_of_cases"]
-        
-        
-    def set_num_of_cases(self, fad_value, num_of_cases):
-    
-        key = self.key(fad_value)
-
-        self._journal[key]["num_of_cases"] = num_of_cases
-        
-        
-    def inc_num_of_cases(self, fad_value):
-
-       self.set_num_of_cases(fad_value, self.get_num_of_cases(fad_value) + 1) 
-        
-        
-    def get_target_estimate(self, fad_value):
-    
-        key = self.key(fad_value)
-    
-        return self._journal[key]["target_estimate"]
-        
-        
-    def set_target_estimate(self, fad_value, target_estimate):
-    
-        key = self.key(fad_value)
-
-        self._journal[key]["target_estimate"] = target_estimate 
-    
-    
-    def insert_target_estimate(self, fad_value, target_value):
-        
-        self.set_num_of_cases(fad_value, 1)
-        self.set_target_estimate(fad_value, target_value)
-            
-    
-    def update_target_estimate(self, fad_value, onemore_target_value):
-
-        curr_num_of_cases = self.get_num_of_cases(fad_value)
-        curr_target_estimate = self.get_target_estimate(fad_value)
-        
-        total_target_values_updated = \
-            curr_target_estimate*curr_num_of_cases + onemore_target_value 
-        
-        num_of_cases_updated = curr_num_of_cases + 1
-        target_estimate_updated = \
-            total_target_values_updated/num_of_cases_updated    
-                
-        self.set_num_of_cases(fad_value, num_of_cases_updated)
-        self.set_target_estimate(fad_value, target_estimate_updated)
-        
-        
-    def accept_case(self, fad_value, target_value):
-            
-        if self.fad_value_registered(fad_value):   
-            self.update_target_estimate(fad_value, target_value)                        
-        else:    
-            self.register_fad_value(fad_value)
-            self.insert_target_estimate(fad_value, target_value)
-
-        
-        
+             
 class AttrIdiot(Idiot):
                 
-    def update_fad_value_range(self, fad_value):
+    def update_fad_scale_span(self, fad_scale):
 
         pass
         
@@ -255,7 +280,8 @@ class AttrIdiot(Idiot):
         fad_value = attendee.get_prop_value(self.fad_name)
 
         if self.fad_value_registered(fad_value):
-            verdict = self.get_target_estimate(fad_value)
+            key = self.key(fad_value)
+            verdict = self.get_target_estimate(key)
                         
         return verdict          
         
@@ -263,67 +289,66 @@ class AttrIdiot(Idiot):
         
 class NumericIdiot(Idiot):
 
-    def find_reference_fad_values(self, fad_value): 
+    def scale(self, fad_value):
+    
+        return fad_value
+        
 
-        x1 = x2 = None
-        
-        scale = self.scale(fad_value)
+    def find_bound_keys(self, fad_scale): 
 
-        pairs = [[key, self.key2scale(key)] for key in self._journal]  
-        pairs_sorted_by_scales = sorted(pairs, key=itemgetter(1))
+        key_lt = key_rt = None
+ 
+        keys = self.get_sorted_keys()
+        last_key_idx = len(keys) - 1
         
-        sorted_keys = [pair[0] for pair in pairs_sorted_by_scales]  
-        sorted_scales = [pair[1] for pair in pairs_sorted_by_scales]     
-        
-        last_fad_value_idx = len(sorted_keys) - 1
-        
-        if last_fad_value_idx < 0:
-            x1 = None
-            x2 = None
-        
-        elif last_fad_value_idx == 0:
-            x1 = sorted_keys[0] 
-            x2 = None
+        if last_key_idx == 0:
+            key_lt = keys[0] 
             
         else:    
-            if scale < sorted_scales[0]:
-                x1 = sorted_keys[0]
-                x2 = sorted_keys[1]
+            if fad_scale < self.get_fad_scale(keys[0]):
+                key_lt = keys[0]
+                key_rt = keys[1]
                 
-            elif scale > sorted_scales[last_fad_value_idx]:
-                x1 = sorted_keys[last_fad_value_idx - 1]
-                x2 = sorted_keys[last_fad_value_idx]
+            elif fad_scale > self.get_fad_scale(keys[last_key_idx]):
+                key_lt = keys[last_key_idx - 1]
+                key_rt = keys[last_key_idx]
                 
-            else:      
-                for fad_value_idx in range(last_fad_value_idx):
-                    x1 = sorted_keys[fad_value_idx]
-                    x2 = sorted_keys[fad_value_idx + 1]
-                    if x1 <= scale <= x2:
+            elif last_key_idx > 0:      
+                for key_idx in range(last_key_idx):
+                    key_lt = keys[key_idx]
+                    fad_score_lt = self.get_fad_scale(key_lt)
+                    key_rt = keys[key_idx + 1]
+                    fad_score_rt = self.get_fad_scale(key_rt)
+                    if fad_score_lt <= fad_scale <= fad_score_rt:
                         break
         
-        return x1, x2
+        return key_lt, key_rt
         
 
     def deliver_verdict(self, attendee):
 
         verdict = 0
         
-        fad_value = attendee.get_prop_value(self.fad_name)
+        attendee_fad_value = attendee.get_prop_value(self.fad_name)
+        attendee_fad_scale = self.scale(attendee_fad_value)
         
-        x1, x2 = self.find_reference_fad_values(fad_value)
+        key_lt, key_rt = self.find_bound_keys(attendee_fad_scale)
         
-        if x1 is None and x2 is None:
-            verdict = 0
-        elif x1 is not None and x2 is None:
-            verdict = self.get_target_estimate(x1)
+        if key_lt is not None and key_rt is None:
+            verdict = self.get_target_estimate(key_lt)
         else:
-            y1 = self.get_target_estimate(x1)
-            y2 = self.get_target_estimate(x2)
+            fad_scale_lt = self.get_fad_scale(key_lt)
+            fad_scale_rt = self.get_fad_scale(key_rt)
+            delta_fad_scale = fad_scale_rt - fad_scale_lt
+            
+            target_estimate_lt = self.get_target_estimate(key_lt)
+            target_estimate_rt = self.get_target_estimate(key_rt)
+            delta_target_estimate = target_estimate_rt - target_estimate_lt
+                  
+            a = delta_target_estimate/delta_fad_scale
+            b = target_estimate_lt - a*fad_scale_lt
                     
-            a = (y2 - y1)/(x2 - x1)
-            b = y1 - a*x1
-                    
-            verdict = a*fad_value + b
+            verdict = a*attendee_fad_scale + b
         
         return verdict          
         
