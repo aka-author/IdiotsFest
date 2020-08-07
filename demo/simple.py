@@ -49,9 +49,9 @@ def test():
 
     # 1. Assembling a jury
     jury = IdiotFestJuri("salary")
-    jury.append_judge(Idiot("city", "string"))
-    jury.append_judge(Idiot("job", "string"))
-    jury.append_judge(Idiot("age", "numeric"))
+    jury.append_judge(StringIdiot("city"))
+    jury.append_judge(StringIdiot("job"))
+    jury.append_judge(NumericIdiot("age"))
     
     # 2. Teaching jury members
     for attendee in assemble_teaching_array():

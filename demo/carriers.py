@@ -10021,15 +10021,15 @@ carriers_test = [ \
 
 # 1. Assembling a jury
 jury = IdiotFestJuri("rate")
-jury.append_judge(Idiot("legal_entity", "string"))
-jury.append_judge(Idiot("city", "string"))
-jury.append_judge(Idiot("year_registered", "numeric"))
-jury.append_judge(Idiot("authorized_capital", "numeric"))
-jury.append_judge(Idiot("number_of_owners", "numeric"))
-jury.append_judge(Idiot("last_year_revenu", "numeric"))
-jury.append_judge(Idiot("number_of_tracks", "numeric"))
-jury.append_judge(Idiot("number_of_drivers", "numeric"))
-jury.append_judge(Idiot("drivers_median_salary", "numeric"))
+jury.append_judge(StringIdiot("legal_entity"))
+jury.append_judge(StringIdiot("city"))
+jury.append_judge(NumericIdiot("year_registered"))
+jury.append_judge(NumericIdiot("authorized_capital"))
+jury.append_judge(NumericIdiot("number_of_owners"))
+jury.append_judge(NumericIdiot("last_year_revenu"))
+jury.append_judge(NumericIdiot("number_of_tracks"))
+jury.append_judge(NumericIdiot("number_of_drivers"))
+jury.append_judge(NumericIdiot("drivers_median_salary"))
 
 
 # 2. Teaching jury members

@@ -19,14 +19,17 @@ class IdiotFestAttendee:
         return self._prop_values[prop_name]
 
 
+
 class Idiot:
 
-    def __init__(self, fad_name, fad_datatype_name):
+    def __init__(self, fad_name):
     
         self._fad_name = fad_name
-        self._fad_datatype_name = fad_datatype_name
         
         self._journal = {}
+        
+        self._fad_scale_min = None
+        self._fad_scale_max = None
         
                         
     @property
@@ -34,54 +37,175 @@ class Idiot:
 
         return self._fad_name
         
-        
-    @property
-    def fad_datatype_name(self):
 
-        return self._fad_datatype_name    
+    def key(self, fad_value):
+    
+        return str(fad_value)
         
-                                 
+        
+    def key_exists(self, key):
+
+        return key in self._journal
+            
+        
+    def get_fad_value(self, key):
+ 
+        return self._journal[key].fad_value if self.key_exists(key) else None 
+        
+    
+    def scale(self, fad_value):
+    
+        return 0
+        
+        
+    def get_scale(self, key):
+
+        return self._journal[key].scale if self.key_exists(key) else None 
+        
+    
+    @property
+    def fad_scale_min(self):
+
+        return self._fad_scale_min
+        
+        
+    @setter.fad_scale_min
+    def fad_scale_min(self, fad_scale):
+
+        if self._fad_scale_min is None:
+            self._fad_scale_min = fad_scale
+        elif fad_scale_min > fad_scale:
+            self._fad_scale_min = fad_scale
+         
+            
+    @property
+    def fad_scale_max(self):
+
+        return self._fad_scale_max
+        
+        
+    @setter.fad_scale_max
+    def fad_scale_max(self, fad_scale):
+    
+        if self._fad_scale_max is None:
+            self._fad_scale_max = fad_scale
+        elif fad_scale_max < fad_scale:
+            self._fad_scale_max = fad_scale    
+
+
+    def fad_scale_span(self):
+
+        return self.fad_scale_max - self.fad_scale_min 
+          
+                
+    def update_fad_scale_range(self, fad_scale):
+       
+        self.fad_scale_min = fad_scale
+        self_fad_scale_max = fad_scale
+
+                        
+    def N(self, fad_scale):
+    
+        # N stands for normalize
+   
+        self.update_fad_scale_range(fad_scale)
+        
+        offset = fad_scale - self.fad_scale_min
+        
+        span = self.fad_scale_span()
+        
+        norm = offset/span if span != 0 else 0.5
+                  
+        return norm   
+        
+        
+    def ND(self, fad_value_1, fad_value_2):
+
+        # ND is a normalized difference
+        
+        fad_scale_1 = self.scale(fad_value_1)
+        fad_scale_2 = self.scale(fad_value_2)
+            
+        return self.N(fad_scale_1) - self.N(fad_scale_2)    
+        
+        
+    def IWND(self, fad_value_1, fad_value_2):
+
+        # IWND is a inverse weighted normalized difference
+
+        result = None
+        
+        if self.influence != 0:
+            result = self.ND(fad_value_1, fad_value_2)/self.influence
+
+        return result
+        
+        
+    def SIWND(self, fad_value_1, fad_value_2):
+
+        # SIWND is a squared inverse weighted normalized difference
+
+        iwnd = self.IWND(fad_value_1, fad_value_2)
+        
+        return iwnd*iwnd if iwnd is not None else None 
+        
+             
     def register_fad_value(self, fad_value):
     
+        fad_scale = self.scale(fad_value)
+        self.update_fad_scale_range(fad_scale)
+    
         entry = {"fad_value"       : fad_value, \
+                 "fad_scale"       : fad_scale, \
                  "num_of_cases"    : 0, \
                  "target_estimate" : None}
-                    
-        self._journal[fad_value] = entry
+                                
+        key = self.key(fad_value)                        
+        self._journal[key] = entry
         
     
-    def is_fad_value_registered(self, fad_value):
+    def fad_value_registered(self, fad_value):
                
-        return fad_value in self._journal   
+        key = self.key(fad_value)       
+               
+        return self.key_exists(key)  
     
     
     def get_num_of_cases(self, fad_value):
     
-        return self._journal[fad_value]["num_of_cases"]
+        key = self.key(fad_value)
+        
+        return self._journal[key]["num_of_cases"]
         
         
     def set_num_of_cases(self, fad_value, num_of_cases):
+    
+        key = self.key(fad_value)
 
-        self._journal[fad_value]["num_of_cases"] = num_of_cases
+        self._journal[key]["num_of_cases"] = num_of_cases
         
         
     def inc_num_of_cases(self, fad_value):
 
-       set_num_of_cases(fad_value, self.get_num_of_cases(fad_value) + 1) 
+       self.set_num_of_cases(fad_value, self.get_num_of_cases(fad_value) + 1) 
         
         
     def get_target_estimate(self, fad_value):
     
-        return self._journal[fad_value]["target_estimate"]
+        key = self.key(fad_value)
+    
+        return self._journal[key]["target_estimate"]
         
         
     def set_target_estimate(self, fad_value, target_estimate):
+    
+        key = self.key(fad_value)
 
-        self._journal[fad_value]["target_estimate"] = target_estimate 
+        self._journal[key]["target_estimate"] = target_estimate 
     
     
     def insert_target_estimate(self, fad_value, target_value):
-       
+        
         self.set_num_of_cases(fad_value, 1)
         self.set_target_estimate(fad_value, target_value)
             
@@ -104,60 +228,83 @@ class Idiot:
         
     def accept_case(self, fad_value, target_value):
             
-        if self.is_fad_value_registered(fad_value):   
+        if self.fad_value_registered(fad_value):   
             self.update_target_estimate(fad_value, target_value)                        
         else:    
             self.register_fad_value(fad_value)
             self.insert_target_estimate(fad_value, target_value)
+
         
-         
-    def deliver_verdict_for_string(self, attendee):
+        
+class AttrIdiot(Idiot):
+                
+    def update_fad_value_range(self, fad_value):
+
+        pass
+        
+        
+    def ND(self, fad_value_1, fad_value_2):
+
+        return 0 if fad_value_1 == fad_value_2 else 1
+        
+
+    def deliver_verdict(self, attendee):
 
         verdict = 0
 
         fad_value = attendee.get_prop_value(self.fad_name)
 
-        if fad_value in self._journal:
+        if self.fad_value_registered(fad_value):
             verdict = self.get_target_estimate(fad_value)
                         
-        return verdict    
+        return verdict          
         
-             
+        
+        
+class NumericIdiot(Idiot):
+
     def find_reference_fad_values(self, fad_value): 
 
         x1 = x2 = None
+        
+        scale = self.scale(fad_value)
 
-        fad_values = sorted(self._journal)        
-        last_fad_value_idx = len(fad_values) - 1
+        pairs = [[key, self.key2scale(key)] for key in self._journal]  
+        pairs_sorted_by_scales = sorted(pairs, key=itemgetter(1))
+        
+        sorted_keys = [pair[0] for pair in pairs_sorted_by_scales]  
+        sorted_scales = [pair[1] for pair in pairs_sorted_by_scales]     
+        
+        last_fad_value_idx = len(sorted_keys) - 1
         
         if last_fad_value_idx < 0:
             x1 = None
             x2 = None
         
         elif last_fad_value_idx == 0:
-            x1 = fad_values[0] 
+            x1 = sorted_keys[0] 
             x2 = None
             
         else:    
-            if fad_value < fad_values[0]:
-                x1 = fad_values[0]
-                x2 = fad_values[1]
+            if scale < sorted_scales[0]:
+                x1 = sorted_keys[0]
+                x2 = sorted_keys[1]
                 
-            elif fad_value > fad_values[last_fad_value_idx]:
-                x1 = fad_values[last_fad_value_idx - 1]
-                x2 = fad_values[last_fad_value_idx]
+            elif scale > sorted_scales[last_fad_value_idx]:
+                x1 = sorted_keys[last_fad_value_idx - 1]
+                x2 = sorted_keys[last_fad_value_idx]
                 
             else:      
                 for fad_value_idx in range(last_fad_value_idx):
-                    x1 = fad_values[fad_value_idx]
-                    x2 = fad_values[fad_value_idx + 1]
-                    if x1 <= fad_value <= x2:
+                    x1 = sorted_keys[fad_value_idx]
+                    x2 = sorted_keys[fad_value_idx + 1]
+                    if x1 <= scale <= x2:
                         break
         
         return x1, x2
         
-              
-    def deliver_verdict_for_numeric(self, attendee):
+
+    def deliver_verdict(self, attendee):
 
         verdict = 0
         
@@ -178,21 +325,7 @@ class Idiot:
                     
             verdict = a*fad_value + b
         
-        return verdict  
-
-
-    def deliver_verdict(self, attendee):
-    
-        verdict = 0
-        
-        if self.fad_datatype_name == "string":
-            verdict = self.deliver_verdict_for_string(attendee)
-        elif self.fad_datatype_name == "numeric":
-            verdict = self.deliver_verdict_for_numeric(attendee)
-        else:
-            verdict = 0
-            
-        return verdict   
+        return verdict          
         
         
         
@@ -202,6 +335,7 @@ class IdiotFestJuri:
 
         self._target_name = target_name
         self._judges = {}
+        self._gallery = [];
 	
     
     @property
@@ -320,6 +454,14 @@ class IdiotFestJuri:
             fad_value = attendee.get_prop_value(fad_name)
             target_value = attendee.get_prop_value(self.target_name)
             idiot.accept_case(fad_value, target_value)
+       
+       
+    def remember(self, attendee):
+        
+        self._gallery.append(attendee)
+        
+        for prop_name in self._judges:
+            self._judges[prop_name].rememberValues
         
 
     def accept_attendee(self, attendee):
@@ -335,6 +477,8 @@ class IdiotFestJuri:
         self.recalc_influence_of_judges()
         
         self.retrain_judges(attendee)
+        
+        self.remember(attendee)
         
        
     def get_influence(self, prop_name):
