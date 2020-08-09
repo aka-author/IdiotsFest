@@ -332,11 +332,9 @@ class NumericIdiot(Idiot):
         attendee_fad_value = attendee.get_prop_value(self.fad_name)
         attendee_fad_scale = self.scale(attendee_fad_value)
         
-        key_lt, key_rt = self.find_bound_keys(attendee_fad_scale)
+        key_lt, key_rt = self.find_bound_keys(attendee_fad_scale)   
         
-        if key_lt is not None and key_rt is None:
-            verdict = self.get_target_estimate(key_lt)
-        elif key_lt is not None and key_rt is not None:
+        if key_rt is not None:
             fad_scale_lt = self.get_fad_scale(key_lt)
             fad_scale_rt = self.get_fad_scale(key_rt)
             delta_fad_scale = fad_scale_rt - fad_scale_lt
@@ -349,6 +347,9 @@ class NumericIdiot(Idiot):
             b = target_estimate_lt - a*fad_scale_lt
                     
             verdict = a*attendee_fad_scale + b
+            
+        elif key_lt is not None:
+            verdict = self.get_target_estimate(key_lt)    
         
         return verdict          
         
