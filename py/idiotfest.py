@@ -361,7 +361,7 @@ class IdiotFestJuri:
         self._target_name = target_name
         self._judges = {}
         self._directory = [];
-        self._margin = 0.8
+        self._margin = 0.7
 	
     
     @property
