@@ -239,23 +239,23 @@ class Idiot:
         return self.N(fad_scale_1) - self.N(fad_scale_2)    
         
         
-    def IWND(self, fad_value_1, fad_value_2):
+    def IWND(self, fad_value_1, fad_value_2, weight):
 
         # IWND is a inverse weighted normalized difference
 
         result = None
         
-        if self.influence != 0:
-            result = self.ND(fad_value_1, fad_value_2)/self.influence
+        if weight != 0:
+            result = self.ND(fad_value_1, fad_value_2)/weight
 
         return result
         
         
-    def IWND2(self, fad_value_1, fad_value_2):
+    def IWND2(self, fad_value_1, fad_value_2, weight):
 
         # SIWND is a squared inverse weighted normalized difference
 
-        iwnd = self.IWND(fad_value_1, fad_value_2)
+        iwnd = self.IWND(fad_value_1, fad_value_2, weight)
         
         return iwnd*iwnd if iwnd is not None else None 
         
@@ -304,7 +304,7 @@ class NumericIdiot(Idiot):
         if last_key_idx == 0:
             key_lt = keys[0] 
             
-        else:    
+        elif last_key_idx >= 1:    
             if fad_scale < self.get_fad_scale(keys[0]):
                 key_lt = keys[0]
                 key_rt = keys[1]
@@ -313,7 +313,7 @@ class NumericIdiot(Idiot):
                 key_lt = keys[last_key_idx - 1]
                 key_rt = keys[last_key_idx]
                 
-            elif last_key_idx > 0:      
+            else:      
                 for key_idx in range(last_key_idx):
                     key_lt = keys[key_idx]
                     fad_score_lt = self.get_fad_scale(key_lt)
@@ -336,7 +336,7 @@ class NumericIdiot(Idiot):
         
         if key_lt is not None and key_rt is None:
             verdict = self.get_target_estimate(key_lt)
-        else:
+        elif key_lt is not None and key_rt is not None:
             fad_scale_lt = self.get_fad_scale(key_lt)
             fad_scale_rt = self.get_fad_scale(key_rt)
             delta_fad_scale = fad_scale_rt - fad_scale_lt
@@ -360,20 +360,47 @@ class IdiotFestJuri:
 
         self._target_name = target_name
         self._judges = {}
-        self._gallery = [];
+        self._directory = [];
+        self._margin = 0.8
 	
     
     @property
     def target_name(self):
     
         return self._target_name
+        
+        
+    @property
+    def margin(self):
     
+        return self._margin
+        
+        
+    @margin.setter
+    def margin(self, margin):
+    
+        self._margin = margin
+    
+    
+    # Managing directory
+
+    def append_attendee(self, attendee):
+    
+        directory_entry = { \
+            "attendee" : attendee, \
+            "weight"   : 1 \
+        }
+        
+        self._directory.append(directory_entry)
+        
+    
+    # Managing judges
     
     def append_judge(self, idiot):
 
-        judge = {"idiot"     : idiot, \
-                 "score"     : 0, \
-                 "influence" : 0}
+        judge = {"idiot"  : idiot, \
+                 "score"  : 0, \
+                 "weight" : 0}
         
         self._judges[idiot.fad_name] = judge
        
@@ -381,8 +408,30 @@ class IdiotFestJuri:
     def retrieve_idiot(self, fad_name):
 
         return self._judges[fad_name]["idiot"]
+    
+    
+    def get_judge_score(self, prop_name):    
+     
+        return self._judges[prop_name]["score"]    
+    
+    
+    def inc_judge_score(self, prop_name, gain):
+    
+        self._judges[prop_name]["score"] += gain
         
         
+    def get_judge_weight(self, prop_name):
+    
+        return self._judges[prop_name]["weight"]
+        
+    
+    def set_judge_weight(self, prop_name, weight):    
+        
+        self._judges[prop_name]["weight"] = weight
+    
+    
+    # Training and selecting judges
+    
     def vote(self, attendee):
 
         verdicts = {}
@@ -392,21 +441,6 @@ class IdiotFestJuri:
             verdicts[fad_name] = idiot.deliver_verdict(attendee) 
            
         return verdicts   
-        
-            
-    def get_score(self, prop_name):    
-     
-        return self._judges[prop_name]["score"]
-    
-    
-    def inc_score(self, prop_name, gain):
-    
-        self._judges[prop_name]["score"] += gain
-    
-    
-    def set_influence(self, prop_name, influence):    
-        
-        self._judges[prop_name]["influence"] = influence
         
        
     def calc_mistakes(self, verdicts, target_value):
@@ -448,7 +482,7 @@ class IdiotFestJuri:
     
     def reward_judge(self, winner_judge_fad_name, gain):
     
-        self.inc_score(winner_judge_fad_name, gain)
+        self.inc_judge_score(winner_judge_fad_name, gain)
 
 
     def reward_winner_judges(self, winner_judge_fad_names):
@@ -460,17 +494,32 @@ class IdiotFestJuri:
             self.reward_judge(fad_name, gain)
         
         
-    def recalc_influence_of_judges(self):  
+    def recalc_judge_weights(self):  
     
-        total = 0
-        
+        total = 0      
         for fad_name in self._judges:
-            total += self.get_score(fad_name)
+            total += self.get_judge_score(fad_name)
             
-        for fad_name in self._judges:
-            influence = self.get_score(fad_name)/total
-            self.set_influence(fad_name, influence)    
+        judges_by_score = \
+            sorted(self._judges, \
+                   key = lambda fad_name: self._judges[fad_name]["score"], \
+                   reverse = True)
+            
+        subtotal = 0
+        significant_judges = []    
+        for fad_name in judges_by_score:
+            subtotal += self.get_judge_score(fad_name)
+            significant_judges.append(fad_name)
+            if subtotal/total >= self.margin:
+                break
         
+        for fad_name in self._judges:
+            if fad_name in significant_judges:
+                weight = self.get_judge_score(fad_name)/subtotal
+                self.set_judge_weight(fad_name, weight)
+            else:
+                self.set_judge_weight(fad_name, 0)
+                       
         
     def retrain_judges(self, attendee):
 
@@ -479,17 +528,9 @@ class IdiotFestJuri:
             fad_value = attendee.get_prop_value(fad_name)
             target_value = attendee.get_prop_value(self.target_name)
             idiot.accept_case(fad_value, target_value)
-       
-       
-    def remember(self, attendee):
-        
-        self._gallery.append(attendee)
-        
-        for prop_name in self._judges:
-            self._judges[prop_name].rememberValues
-        
+         
 
-    def accept_attendee(self, attendee):
+    def examine_attendee(self, attendee):
     
         verdicts = self.vote(attendee)
       
@@ -499,17 +540,19 @@ class IdiotFestJuri:
         winning_mistake = self.detect_min_mistake(mistakes)
         winner_judge_fad_names = self.select_winner_judges(mistakes, winning_mistake)       
         self.reward_winner_judges(winner_judge_fad_names)      
-        self.recalc_influence_of_judges()
         
         self.retrain_judges(attendee)
         
-        self.remember(attendee)
-        
-       
-    def get_influence(self, prop_name):
+            
+    def train_judges(self):
+
+        for directory_entry in self._directory:
+            self.examine_attendee(directory_entry["attendee"])
+            
+        self.recalc_judge_weights()    
+            
     
-        return self._judges[prop_name]["influence"]
-        
+    # Making the job ;-)    
 
     def evaluate_attendee(self, attendee):
         
