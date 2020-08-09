@@ -9,12 +9,7 @@ def test():
 
     juri = get_juri()
     
-    count = 0
-    limit = 10000
     for carrier in get_attendees():
-        count += 1
-        if count > limit:
-            break  
         juri.append_attendee(IdiotFestAttendee(carrier))
         
     juri.train_judges()   
@@ -23,35 +18,10 @@ def test():
                        key = lambda fad_name: juri._judges[fad_name]["score"], \
                        reverse = True)
 
-   
-    for fad_name in sortrd_jadges:      
+    for fad_name in sortrd_jadges:
         print("{:25}".format(fad_name), \
               "{:>10}".format("{:.3f}".format(juri._judges[fad_name]["score"], 3)), \
               "{:>10}".format("{:.3f}".format(juri._judges[fad_name]["weight"], 3)))
-              
-    
-    success_margin = 20
-    success = 0    
-    test_attendees = get_test_attendees()
-    for test_carrier in test_attendees:
-        
-        attendee = IdiotFestAttendee(test_carrier)
-        
-        real_rate = attendee.get_prop_value("rate")
-        real_rate_str = "{:.2f}".format(real_rate)
-        
-        juri_rate = juri.evaluate_attendee(attendee)
-        juri_rate_str = "{:.2f}".format(juri_rate)
-        
-        mistake = 100*abs(real_rate - juri_rate)/real_rate
-        mistake_str = "{:>5}".format("{:.1f}".format(mistake) + "%")
-        
-        if mistake < success_margin:
-            success += 1
-       
-        print(real_rate_str, " : ", juri_rate_str, " : ", mistake_str)
-        
-    print("Success: ", str(round(100*success/len(test_attendees))) + "%")    
 
 
 def get_juri():
@@ -2832,31 +2802,6 @@ def get_attendees():
     {"legal_entity" : "ООО", "city" : "Москва", "year_registered" : 2015, "authorized_capital" : 10000, "number_of_owners" : 2, "last_year_revenu" : 8051636, "number_of_tracks" : 6, "number_of_drivers" : 12, "drivers_median_salary" : 88934, "rate" : 4.05},\
     
     ]
-    
-def get_test_attendees():
 
-    return [ \
-        {"legal_entity" : "ООО", "city" : "Тверь", "year_registered" : 2007, "authorized_capital" : 106207, "number_of_owners" : 1, "last_year_revenu" : 15693282, "number_of_tracks" : 10, "number_of_drivers" : 11, "drivers_median_salary" : 70701, "rate" : 2.57},\
-        {"legal_entity" : "ФГУП", "city" : "Тверь", "year_registered" : 2016, "authorized_capital" : 10000, "number_of_owners" : 8, "last_year_revenu" : 15692300, "number_of_tracks" : 6, "number_of_drivers" : 10, "drivers_median_salary" : 65500, "rate" : 4},\
-        {"legal_entity" : "ООО", "city" : "Тверь", "year_registered" : 2004, "authorized_capital" : 10000, "number_of_owners" : 9, "last_year_revenu" : 15172246, "number_of_tracks" : 8, "number_of_drivers" : 17, "drivers_median_salary" : 95041, "rate" : 4.08},\
-        {"legal_entity" : "ООО", "city" : "Томск", "year_registered" : 2006, "authorized_capital" : 10000, "number_of_owners" : 7, "last_year_revenu" : 35672309, "number_of_tracks" : 9, "number_of_drivers" : 19, "drivers_median_salary" : 95150, "rate" : 4.67},\
-        {"legal_entity" : "ООО", "city" : "Томск", "year_registered" : 2016, "authorized_capital" : 4547757, "number_of_owners" : 5, "last_year_revenu" : 35637647, "number_of_tracks" : 10, "number_of_drivers" : 23, "drivers_median_salary" : 92174, "rate" : 4.52},\
-        {"legal_entity" : "ООО", "city" : "Томск", "year_registered" : 2009, "authorized_capital" : 5926131, "number_of_owners" : 1, "last_year_revenu" : 35618152, "number_of_tracks" : 11, "number_of_drivers" : 40, "drivers_median_salary" : 98725, "rate" : 3.27},\
-        {"legal_entity" : "ООО", "city" : "Новосибирск", "year_registered" : 2001, "authorized_capital" : 515996, "number_of_owners" : 8, "last_year_revenu" : 45620897, "number_of_tracks" : 11, "number_of_drivers" : 24, "drivers_median_salary" : 92978, "rate" : 4.51},\
-        {"legal_entity" : "ООО", "city" : "Новосибирск", "year_registered" : 2013, "authorized_capital" : 5344659, "number_of_owners" : 9, "last_year_revenu" : 44660981, "number_of_tracks" : 11, "number_of_drivers" : 52, "drivers_median_salary" : 76946, "rate" : 2.81},\
-        {"legal_entity" : "ФГУП", "city" : "Новосибирск", "year_registered" : 2000, "authorized_capital" : 1668697, "number_of_owners" : 5, "last_year_revenu" : 44368425, "number_of_tracks" : 13, "number_of_drivers" : 25, "drivers_median_salary" : 65500, "rate" : 4.78},\
-        {"legal_entity" : "ООО", "city" : "Новосибирск", "year_registered" : 2004, "authorized_capital" : 3684286, "number_of_owners" : 1, "last_year_revenu" : 43996933, "number_of_tracks" : 10, "number_of_drivers" : 15, "drivers_median_salary" : 84090, "rate" : 3.85},\
-        {"legal_entity" : "ФГУП", "city" : "Новосибирск", "year_registered" : 2001, "authorized_capital" : 6358258, "number_of_owners" : 2, "last_year_revenu" : 43983445, "number_of_tracks" : 11, "number_of_drivers" : 46, "drivers_median_salary" : 65500, "rate" : 3.02},\
-        {"legal_entity" : "ООО", "city" : "Новосибирск", "year_registered" : 2001, "authorized_capital" : 1236593, "number_of_owners" : 10, "last_year_revenu" : 35308970, "number_of_tracks" : 10, "number_of_drivers" : 23, "drivers_median_salary" : 95449, "rate" : 4.51},\
-        {"legal_entity" : "ООО", "city" : "Новосибирск", "year_registered" : 2016, "authorized_capital" : 2103714, "number_of_owners" : 6, "last_year_revenu" : 35234757, "number_of_tracks" : 11, "number_of_drivers" : 25, "drivers_median_salary" : 94529, "rate" : 4.41},\
-        {"legal_entity" : "ООО", "city" : "Новосибирск", "year_registered" : 2004, "authorized_capital" : 1684362, "number_of_owners" : 2, "last_year_revenu" : 35213191, "number_of_tracks" : 10, "number_of_drivers" : 21, "drivers_median_salary" : 97973, "rate" : 4.8},\
-        {"legal_entity" : "ООО", "city" : "Новосибирск", "year_registered" : 2010, "authorized_capital" : 3152423, "number_of_owners" : 9, "last_year_revenu" : 35106415, "number_of_tracks" : 11, "number_of_drivers" : 19, "drivers_median_salary" : 97563, "rate" : 4.35},\
-        {"legal_entity" : "ООО", "city" : "Новосибирск", "year_registered" : 2013, "authorized_capital" : 10000, "number_of_owners" : 9, "last_year_revenu" : 35054606, "number_of_tracks" : 9, "number_of_drivers" : 21, "drivers_median_salary" : 97907, "rate" : 4.38},\
-        {"legal_entity" : "ООО", "city" : "Новосибирск", "year_registered" : 2017, "authorized_capital" : 10000, "number_of_owners" : 1, "last_year_revenu" : 35045453, "number_of_tracks" : 9, "number_of_drivers" : 19, "drivers_median_salary" : 95876, "rate" : 4.7},\
-        {"legal_entity" : "ООО", "city" : "Новосибирск", "year_registered" : 2009, "authorized_capital" : 10000, "number_of_owners" : 9, "last_year_revenu" : 34905236, "number_of_tracks" : 9, "number_of_drivers" : 34, "drivers_median_salary" : 84387, "rate" : 3.24},\
-        {"legal_entity" : "ООО", "city" : "Новосибирск", "year_registered" : 2002, "authorized_capital" : 10000, "number_of_owners" : 1, "last_year_revenu" : 34727852, "number_of_tracks" : 9, "number_of_drivers" : 18, "drivers_median_salary" : 98147, "rate" : 4.89},\
-        {"legal_entity" : "ООО", "city" : "Омск", "year_registered" : 2007, "authorized_capital" : 10000, "number_of_owners" : 8, "last_year_revenu" : 39194295, "number_of_tracks" : 9, "number_of_drivers" : 19, "drivers_median_salary" : 96775, "rate" : 4.55},\
-        ]
-    
 test()              
 

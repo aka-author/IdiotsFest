@@ -561,7 +561,7 @@ class IdiotFestJuri:
         
         target_estimate = 0
         for prop_name in verdicts:
-            target_estimate += verdicts[prop_name]*self.get_influence(prop_name)
+            target_estimate += verdicts[prop_name]*self.get_judge_weight(prop_name)
 	
         return target_estimate
         
