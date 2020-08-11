@@ -48,42 +48,44 @@ def assemble_teaching_array():
 def test():
 
     # 1. Assembling a jury
-    jury = IdiotFestJuri("salary")
-    jury.append_judge(StringIdiot("city"))
-    jury.append_judge(StringIdiot("job"))
+    jury = IdiotFestJury("salary")
+    jury.append_judge(AttrIdiot("city"))
+    jury.append_judge(AttrIdiot("job"))
     jury.append_judge(NumericIdiot("age"))
     
     # 2. Teaching jury members
     for attendee in assemble_teaching_array():
-        jury.accept_attendee(IdiotFestAttendee(attendee))
+        jury.append_attendee(IdiotFestAttendee(attendee))
+
+    jury.train_judges()
         
     # 3. Evaluating an appicant    
     applicant = IdiotFestAttendee({"city" : "Moscow", "job" : "Programmer", "age" : 65})   
-    print(applicant._prop_values, jury.evaluate_attendee(applicant))
+    print(applicant._prop_values, jury.evaluate_attendee_by_voting(applicant))
     
     applicant = IdiotFestAttendee({"city" : "Moscow", "job" : "Programmer", "age" : 41})   
-    print(applicant._prop_values, jury.evaluate_attendee(applicant))
+    print(applicant._prop_values, jury.evaluate_attendee_by_voting(applicant))
     
     applicant = IdiotFestAttendee({"city" : "Kiev", "job" : "Programmer", "age" : 41})   
-    print(applicant._prop_values, jury.evaluate_attendee(applicant))
+    print(applicant._prop_values, jury.evaluate_attendee_by_voting(applicant))
     
     applicant = IdiotFestAttendee({"city" : "Moscow", "job" : "Programmer", "age" : 37})   
-    print(applicant._prop_values, jury.evaluate_attendee(applicant))
+    print(applicant._prop_values, jury.evaluate_attendee_by_voting(applicant))
     
     applicant = IdiotFestAttendee({"city" : "Moscow", "job" : "Programmer", "age" : 25})   
-    print(applicant._prop_values, jury.evaluate_attendee(applicant))
+    print(applicant._prop_values, jury.evaluate_attendee_by_voting(applicant))
     
     applicant = IdiotFestAttendee({"city" : "Moscow", "job" : "Programmer", "age" : 18})   
-    print(applicant._prop_values, jury.evaluate_attendee(applicant))
+    print(applicant._prop_values, jury.evaluate_attendee_by_voting(applicant))
     
     applicant = IdiotFestAttendee({"city" : "Kiev", "job" : "Accountant", "age" : 45})   
-    print(applicant._prop_values, jury.evaluate_attendee(applicant))  
+    print(applicant._prop_values, jury.evaluate_attendee_by_voting(applicant))  
 
     applicant = IdiotFestAttendee({"city" : "Moscow", "job" : "Janitor", "age" : 44})   
-    print(applicant._prop_values, jury.evaluate_attendee(applicant))   
+    print(applicant._prop_values, jury.evaluate_attendee_by_voting(applicant))   
     
     applicant = IdiotFestAttendee({"city" : "Moscow", "job" : "Janitor", "age" : 80})   
-    print(applicant._prop_values, jury.evaluate_attendee(applicant))   
+    print(applicant._prop_values, jury.evaluate_attendee_by_voting(applicant))   
        
 test()        
     

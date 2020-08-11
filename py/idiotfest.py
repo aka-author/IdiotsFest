@@ -357,7 +357,7 @@ class NumericIdiot(Idiot):
         
         
         
-class IdiotFestJuri:
+class IdiotFestJury:
 
     def __init__(self, target_name):
 
@@ -444,6 +444,29 @@ class IdiotFestJuri:
         self._judges[prop_name]["weight"] = weight
     
     
+    # Performing calculations over attendees
+    
+    def D2(self, attendee1, attendee2):
+    
+        # D2 is a square of distance between two attendees 
+
+        vip_judge_fad_names = self.get_vip_judge_fad_names()
+        
+        d2 = 0
+        for fad_name in vip_judge_fad_names:
+        
+            fad_value_1 = attendee1.get_prop_value(fad_name)
+            fad_value_2 = attendee2.get_prop_value(fad_name)
+            
+            weight = self.get_judge_weight(fad_name)
+            
+            idiot = self.retrieve_idiot(fad_name)
+            
+            d2 += idiot.IWND2(fad_value_1, fad_value_2, 1)
+            
+        return d2  
+    
+   
     # Training and selecting judges
     
     def vote(self, attendee):
@@ -566,7 +589,6 @@ class IdiotFestJuri:
             self.examine_attendee(directory_entry["attendee"])
             
         self.recalc_judge_weights() 
-        print(self._vip_judge_fad_names)
             
       
     def get_vip_judge_fad_names(self):
@@ -576,7 +598,7 @@ class IdiotFestJuri:
     
     # Making the job ;-)    
 
-    def evaluate_attendee_fast(self, attendee):
+    def evaluate_attendee_by_voting(self, attendee):
         
         verdicts = self.vote(attendee)
         
@@ -586,26 +608,7 @@ class IdiotFestJuri:
 	
         return target_estimate
         
-       
-    def D2(self, attendee1, attendee2):
-
-        vip_judge_fad_names = self.get_vip_judge_fad_names()
-        
-        d2 = 0
-        for fad_name in vip_judge_fad_names:
-        
-            fad_value_1 = attendee1.get_prop_value(fad_name)
-            fad_value_2 = attendee2.get_prop_value(fad_name)
-            
-            weight = self.get_judge_weight(fad_name)
-            
-            idiot = self.retrieve_idiot(fad_name)
-            
-            d2 += idiot.IWND2(fad_value_1, fad_value_2, 1)
-            
-        return d2    
-        
-       
+          
     def evaluate_attendee_by_neighbours(self, attendee):
         
         winner_golden = None
