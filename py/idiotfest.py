@@ -7,6 +7,8 @@
 #                                                     (^.^)
 # * * ** *** ***** ******** ************* *********************
 
+import math
+
 class IdiotFestAttendee:
 
     def __init__(self, prop_values):
@@ -361,6 +363,7 @@ class IdiotFestJuri:
 
         self._target_name = target_name
         self._judges = {}
+        self._vip_judge_fad_names = []
         self._directory = [];
         self._margin = 0.7
 	
@@ -383,7 +386,7 @@ class IdiotFestJuri:
         self._margin = margin
     
     
-    # Managing directory
+    # Managing an attendee directory
 
     def append_attendee(self, attendee):
     
@@ -394,7 +397,17 @@ class IdiotFestJuri:
         
         self._directory.append(directory_entry)
         
+        
+    def get_attendee_prop_value(self, idxdir, prop_name):
     
+        return self._directory[idxdir]["attendee"].get_prop_value(prop_name)
+        
+        
+    def get_attendee_target_value(self, idxdir):
+
+        return self.get_attendee_prop_value(idxdir, self.target_name)
+
+              
     # Managing judges
     
     def append_judge(self, idiot):
@@ -495,33 +508,6 @@ class IdiotFestJuri:
             self.reward_judge(fad_name, gain)
         
         
-    def recalc_judge_weights(self):  
-    
-        total = 0      
-        for fad_name in self._judges:
-            total += self.get_judge_score(fad_name)
-            
-        judges_by_score = \
-            sorted(self._judges, \
-                   key = lambda fad_name: self._judges[fad_name]["score"], \
-                   reverse = True)
-            
-        subtotal = 0
-        significant_judges = []    
-        for fad_name in judges_by_score:
-            subtotal += self.get_judge_score(fad_name)
-            significant_judges.append(fad_name)
-            if subtotal/total >= self.margin:
-                break
-        
-        for fad_name in self._judges:
-            if fad_name in significant_judges:
-                weight = self.get_judge_score(fad_name)/subtotal
-                self.set_judge_weight(fad_name, weight)
-            else:
-                self.set_judge_weight(fad_name, 0)
-                       
-        
     def retrain_judges(self, attendee):
 
         for fad_name in self._judges:
@@ -544,18 +530,53 @@ class IdiotFestJuri:
         
         self.retrain_judges(attendee)
         
+    
+    def recalc_judge_weights(self):  
+    
+        total = 0      
+        for fad_name in self._judges:
+            total += self.get_judge_score(fad_name)
+            
+        judges_by_score = \
+            sorted(self._judges, \
+                   key = lambda fad_name: self._judges[fad_name]["score"], \
+                   reverse = True)
+            
+        subtotal = 0
+        significant_judges = []    
+        for fad_name in judges_by_score:
+            subtotal += self.get_judge_score(fad_name)
+            significant_judges.append(fad_name)
+            if subtotal/total >= self.margin:
+                break
+        
+        self._vip_judge_fad_names = []        
+        for fad_name in self._judges:
+            if fad_name in significant_judges:
+                weight = self.get_judge_score(fad_name)/subtotal
+                self.set_judge_weight(fad_name, weight)
+                self._vip_judge_fad_names.append(fad_name)
+            else:
+                self.set_judge_weight(fad_name, 0)    
+        
             
     def train_judges(self):
 
         for directory_entry in self._directory:
             self.examine_attendee(directory_entry["attendee"])
             
-        self.recalc_judge_weights()    
+        self.recalc_judge_weights() 
+        print(self._vip_judge_fad_names)
             
+      
+    def get_vip_judge_fad_names(self):
+    
+        return self._vip_judge_fad_names
+    
     
     # Making the job ;-)    
 
-    def evaluate_attendee(self, attendee):
+    def evaluate_attendee_fast(self, attendee):
         
         verdicts = self.vote(attendee)
         
@@ -564,4 +585,67 @@ class IdiotFestJuri:
             target_estimate += verdicts[prop_name]*self.get_judge_weight(prop_name)
 	
         return target_estimate
+        
+       
+    def D2(self, attendee1, attendee2):
+
+        vip_judge_fad_names = self.get_vip_judge_fad_names()
+        
+        d2 = 0
+        for fad_name in vip_judge_fad_names:
+        
+            fad_value_1 = attendee1.get_prop_value(fad_name)
+            fad_value_2 = attendee2.get_prop_value(fad_name)
+            
+            weight = self.get_judge_weight(fad_name)
+            
+            idiot = self.retrieve_idiot(fad_name)
+            
+            d2 += idiot.IWND2(fad_value_1, fad_value_2, 1)
+            
+        return d2    
+        
+       
+    def evaluate_attendee_by_neighbours(self, attendee):
+        
+        winner_golden = None
+        d2golden = float("inf")
+        
+        winner_silver = None
+        d2silver = float("inf")
+        
+        winner_bronze = None
+        d2bronse = float("inf")
+        
+        for known_attendee in self._directory:  
+        
+            d2 = self.D2(attendee, known_attendee["attendee"])
+            
+            if d2golden > d2:
+                d2bronze = d2silver
+                winner_bronze = winner_silver
+                d2silver = d2golden
+                winner_silver = winner_golden
+                d2golden = d2
+                winner_golden = known_attendee
+            elif d2silver > d2:
+                d2bronze = d2silver
+                winner_bronze = winner_silver
+                d2silver = d2
+                winner_silver = known_attendee
+            elif d2bronze > d2:
+                d2bronze = d2
+                winner_bronze =  known_attendee  
+                
+        target_value_golden = \
+            winner_golden["attendee"].get_prop_value(self.target_name) 
+        target_value_silver = \
+            winner_silver["attendee"].get_prop_value(self.target_name)
+        target_value_bronze = \
+            winner_bronze["attendee"].get_prop_value(self.target_name)
+                  
+        estimate = (target_value_golden + target_value_silver + target_value_bronze)/3
+        
+        return estimate
+            
         
