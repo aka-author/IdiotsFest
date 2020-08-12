@@ -23,58 +23,54 @@ def test():
                        key = lambda fad_name: jury._judges[fad_name]["score"], \
                        reverse = True)
 
-   
+    print("Margin: ", jury.margin)
     for fad_name in sortrd_jadges:      
         print("{:25}".format(fad_name), \
               "{:>10}".format("{:.3f}".format(jury._judges[fad_name]["score"], 3)), \
               "{:>10}".format("{:.3f}".format(jury._judges[fad_name]["weight"], 3)))
               
+    print()
+    print("Real rate  Voting             Neighbours")
+    print("           Rating   Mistake   Rating   Mistake")
     
     success_margin = 20
-    success = 0    
+    success_voting = 0    
+    success_neighbours = 0   
     test_attendees = get_test_attendees()
     for test_carrier in test_attendees:
         
         attendee = IdiotFestAttendee(test_carrier)
         
         real_rate = attendee.get_prop_value("rate")
-        real_rate_str = "{:.2f}".format(real_rate)
+        real_rate_str = "{:>9}".format("{:.2f}".format(real_rate))
         
-        jury_rate = jury.evaluate_attendee_by_voting(attendee)
-        jury_rate_str = "{:.2f}".format(jury_rate)
+        jury_rate_voting = jury.evaluate_attendee_by_voting(attendee)
+        jury_rate_voting_str = " {:>6}".format("{:.2f}".format(jury_rate_voting))
         
-        mistake = 100*abs(real_rate - jury_rate)/real_rate
-        mistake_str = "{:>5}".format("{:.1f}".format(mistake) + "%")
+        mistake_voting = 100*abs(real_rate - jury_rate_voting)/real_rate
+        mistake_voting_str = "  {:>7}".format("{:.1f}".format(mistake_voting) + "%")
         
-        if mistake < success_margin:
-            success += 1
-       
-        print(real_rate_str, " : ", jury_rate_str, " : ", mistake_str)
+        if mistake_voting < success_margin:
+            success_voting += 1
         
-    print("Success: ", str(round(100*success/len(test_attendees))) + "%")    
+        jury_rate_neighbours = jury.evaluate_attendee_by_neighbours(attendee)
+        jury_rate_neighbours_str = "  {:>6}".format("{:.2f}".format(jury_rate_neighbours))
+        
+        mistake_neighbours = 100*abs(real_rate - jury_rate_neighbours)/real_rate
+        mistake_neighbours_str = "  {:>7}".format("{:.1f}".format(mistake_neighbours) + "%")
+        
+        print(real_rate_str, jury_rate_voting_str, mistake_voting_str, \
+                             jury_rate_neighbours_str, mistake_neighbours_str)
+        
+        if mistake_neighbours < success_margin:
+            success_neighbours += 1
+        
+    print()    
+    print("Success ") 
+    print("   voting:     ", str(round(100*success_voting/len(test_attendees))) + "%")
+    print("   neighbours: ", str(round(100*success_neighbours/len(test_attendees))) + "%")
     
-    success = 0
-    for test_carrier in test_attendees:
-        
-        attendee = IdiotFestAttendee(test_carrier)
-        
-        real_rate = attendee.get_prop_value("rate")
-        real_rate_str = "{:.2f}".format(real_rate)
-        
-        jury_rate = jury.evaluate_attendee_by_neighbours(attendee)
-        jury_rate_str = "{:.2f}".format(jury_rate)
-        
-        mistake = 100*abs(real_rate - jury_rate)/real_rate
-        mistake_str = "{:>5}".format("{:.1f}".format(mistake) + "%")
-        
-        if mistake < success_margin:
-            success += 1
-       
-        print(real_rate_str, " : ", jury_rate_str, " : ", mistake_str)
-        
-    print("Success: ", str(round(100*success/len(test_attendees))) + "%")    
-
-
+   
 def get_jury():
 
     jury = IdiotFestJury("rate")
@@ -87,8 +83,8 @@ def get_jury():
     jury.append_judge(NumericIdiot("number_of_tracks"))
     jury.append_judge(NumericIdiot("number_of_drivers"))
     jury.append_judge(NumericIdiot("drivers_median_salary"))
-
-    jury.margin = 1
+    
+    jury.margin = 0.5
 
     return jury
 

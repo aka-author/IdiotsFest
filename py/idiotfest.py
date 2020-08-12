@@ -580,7 +580,7 @@ class IdiotFestJury:
                 self.set_judge_weight(fad_name, weight)
                 self._vip_judge_fad_names.append(fad_name)
             else:
-                self.set_judge_weight(fad_name, 0)    
+                self.set_judge_weight(fad_name, 0)        
         
             
     def train_judges(self):
